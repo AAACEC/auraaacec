@@ -34,10 +34,12 @@ export function UserMenu({
         href="/dashboard" 
         className={cn(
           buttonVariants({ variant: "ghost", size: "default" }), 
-          "hidden md:flex gap-2 text-primary-foreground hover:bg-white hover:text-primary font-black uppercase tracking-widest text-[11px] transition-colors h-11 px-5 border border-white/20 rounded-xl bg-white/5"
+          "flex gap-2 text-primary-foreground hover:bg-white hover:text-primary font-black uppercase tracking-widest text-[11px] transition-colors h-11 px-3 md:px-5 border border-white/20 rounded-xl bg-white/5"
         )}
+        title="Dashboard"
       >
-        <LayoutDashboard className="h-5 w-5" /> Dashboard
+        <LayoutDashboard className="h-5 w-5" /> 
+        <span className="hidden md:inline">Dashboard</span>
       </Link>
 
       {/* Notification Center */}

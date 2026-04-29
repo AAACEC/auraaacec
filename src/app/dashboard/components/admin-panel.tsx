@@ -32,6 +32,8 @@ export function AdminPanel({
   const [assignedMemberIds, setAssignedMemberIds] = useState<string[]>([])
   const [memberSearch, setMemberSearch] = useState('')
 
+  const [managementSearch, setManagementSearch] = useState('')
+
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -71,6 +73,11 @@ export function AdminPanel({
   const filteredMembers = allProfiles.filter(p => 
     p.nickname.toLowerCase().includes(memberSearch.toLowerCase()) ||
     p.fullName.toLowerCase().includes(memberSearch.toLowerCase())
+  )
+
+  const filteredManagementMembers = allProfiles.filter(p =>
+    p.nickname.toLowerCase().includes(managementSearch.toLowerCase()) ||
+    p.fullName.toLowerCase().includes(managementSearch.toLowerCase())
   )
 
   const handleValidate = async (formData: FormData) => {
@@ -294,13 +301,27 @@ export function AdminPanel({
       {currentRole === 'Presidência' && (
         <Card className="col-span-1 border-2 shadow-sm rounded-2xl overflow-hidden flex flex-col">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
-              <Users className="h-5 w-5 text-primary" /> Gestão AAACEC
-            </CardTitle>
+            <div className="flex flex-col gap-4">
+              <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+                <Users className="h-5 w-5 text-primary" /> Gestão AAACEC
+              </CardTitle>
+
+              {/* Management Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                <input 
+                  type="text"
+                  placeholder="Buscar integrante..."
+                  value={managementSearch}
+                  onChange={(e) => setManagementSearch(e.target.value)}
+                  className="w-full h-8 pl-8 pr-3 rounded-lg border-2 border-input bg-background text-[10px] focus:border-primary outline-none transition-all font-bold uppercase tracking-tighter"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="pt-8 pb-10 flex-1">
             <div className="space-y-3 max-h-[450px] overflow-y-auto pr-2">
-              {allProfiles.map((p) => {
+              {filteredManagementMembers.map((p) => {
                 const isChangingRole = actionId === `role-${p.id}` && isPending;
                 return (
                   <div key={p.id} className="flex items-center justify-between gap-3 border-b-2 border-muted pb-3 last:border-0 transition-colors group">
@@ -326,6 +347,11 @@ export function AdminPanel({
                   </div>
                 );
               })}
+              {filteredManagementMembers.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
+                  <p className="text-xs font-medium italic">Nenhum integrante encontrado.</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
