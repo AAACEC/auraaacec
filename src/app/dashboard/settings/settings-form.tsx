@@ -6,13 +6,19 @@ import { Input } from '@/components/ui/input'
 import { updateProfile } from '../member-actions'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function SettingsForm({ profile }: { profile: any }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+
+  const standardCourses = ["Engenharia de Computação", "Ciência da Computação"]
+  const initialIsOther = !standardCourses.includes(profile.course)
+  
+  const [courseOption, setCourseOption] = useState(initialIsOther ? 'Outro' : profile.course)
+  const [customCourse, setCustomCourse] = useState(initialIsOther ? profile.course : '')
 
   const handleUpdate = async (formData: FormData) => {
     startTransition(async () => {
@@ -51,9 +57,38 @@ export function SettingsForm({ profile }: { profile: any }) {
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="course" className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Curso</Label>
-              <Input id="course" name="course" defaultValue={profile.course} required className="h-11 rounded-xl border-2" />
+              <input 
+                type="hidden" 
+                name="course" 
+                value={courseOption === 'Outro' ? customCourse : courseOption} 
+              />
+              <Label htmlFor="courseSelect" className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Curso</Label>
+              <select
+                id="courseSelect"
+                className="flex h-11 w-full rounded-xl border-2 border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={courseOption}
+                onChange={(e) => setCourseOption(e.target.value)}
+              >
+                <option value="Engenharia de Computação">Engenharia de Computação</option>
+                <option value="Ciência da Computação">Ciência da Computação</option>
+                <option value="Outro">Outro</option>
+              </select>
             </div>
+
+            {courseOption === 'Outro' && (
+              <div className="grid gap-2">
+                <Label htmlFor="customCourse" className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Qual o seu curso?</Label>
+                <Input
+                  id="customCourse"
+                  type="text"
+                  value={customCourse}
+                  onChange={(e) => setCustomCourse(e.target.value)}
+                  placeholder="Digite o nome do seu curso"
+                  required={courseOption === 'Outro'}
+                  className="h-11 rounded-xl border-2"
+                />
+              </div>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="favoriteSong" className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Música Favorita do 100Nossão</Label>

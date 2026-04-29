@@ -10,6 +10,8 @@ export function OnboardingForm({ defaultFullName }: { defaultFullName: string })
   const [cpf, setCpf] = useState('')
   const [ra, setRa] = useState('')
   const [entryYear, setEntryYear] = useState('')
+  const [courseOption, setCourseOption] = useState('Engenharia de Computação')
+  const [customCourse, setCustomCourse] = useState('')
 
   const formatCPF = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11)
@@ -93,15 +95,40 @@ export function OnboardingForm({ defaultFullName }: { defaultFullName: string })
           />
         </div>
 
+        {/* Hidden field to send the final course value to the action */}
+        <input 
+          type="hidden" 
+          name="course" 
+          value={courseOption === 'Outro' ? customCourse : courseOption} 
+        />
+
         <div className="grid gap-2">
-          <Label htmlFor="course">Curso</Label>
-          <Input
-            id="course"
-            name="course"
-            type="text"
-            required
-          />
+          <Label htmlFor="courseSelect">Curso</Label>
+          <select
+            id="courseSelect"
+            className="flex h-10 w-full rounded-md border-2 border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            value={courseOption}
+            onChange={(e) => setCourseOption(e.target.value)}
+          >
+            <option value="Engenharia de Computação">Engenharia de Computação</option>
+            <option value="Ciência da Computação">Ciência da Computação</option>
+            <option value="Outro">Outro</option>
+          </select>
         </div>
+
+        {courseOption === 'Outro' && (
+          <div className="grid gap-2">
+            <Label htmlFor="customCourse">Qual o seu curso?</Label>
+            <Input
+              id="customCourse"
+              type="text"
+              value={customCourse}
+              onChange={(e) => setCustomCourse(e.target.value)}
+              placeholder="Digite o nome do seu curso"
+              required={courseOption === 'Outro'}
+            />
+          </div>
+        )}
 
         <div className="grid gap-2">
           <Label htmlFor="favoriteSong">Música Favorita do 100Nossão (Opcional)</Label>
