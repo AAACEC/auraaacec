@@ -28,7 +28,7 @@ export const tasks = pgTable('tasks', {
   requiresAttachment: boolean('requires_attachment').default(true).notNull(), // Toggle
   auraValue: integer('aura_value').notNull(),
   originArea: areaEnum('origin_area').notNull(),
-  maxParticipants: integer('max_participants'),
+  maxParticipants: integer('max_participants').notNull(),
   createdBy: uuid('created_by').references(() => profiles.id).notNull(),
   status: statusTaskEnum('status').default('Ativa').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

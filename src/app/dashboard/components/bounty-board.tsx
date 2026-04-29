@@ -127,7 +127,7 @@ export function BountyBoard({
       {activeTasks.length > 0 ? (
         <div className="space-y-4">
           {activeTasks.map((task) => {
-            const alreadySubmitted = userSubmissions.some(s => s.taskId === task.id)
+            const alreadySubmitted = userSubmissions.some(s => s.taskId === task.id && (s.validationStatus === 'Pendente' || s.validationStatus === 'Aprovada'))
             const taskAssignments = assignments.filter(a => a.taskId === task.id)
             const participantCount = taskAssignments.length
             const isParticipant = taskAssignments.some(a => a.userId === currentUserId)
@@ -157,9 +157,8 @@ export function BountyBoard({
                     <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase tracking-widest font-bold">
                       <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5" /> {task.originArea}</span>
                       <span className={`flex items-center gap-1.5 ${isFull && !isParticipant ? 'text-red-600' : ''}`}>
-                        <Users className="h-3.5 w-3.5" /> {participantCount}/{task.maxParticipants || '∞'}
-                      </span>
-                    </div>
+                        <Users className="h-3.5 w-3.5" /> {participantCount}/{task.maxParticipants}
+                      </span>                    </div>
 
                     {participantCount > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3">
@@ -302,7 +301,7 @@ export function BountyBoard({
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="edit-limit" className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Vagas</Label>
-                  <Input id="edit-limit" name="maxParticipants" type="number" min="1" defaultValue={selectedTask.maxParticipants || ''} className="h-11 rounded-xl border-2" />
+                  <Input id="edit-limit" name="maxParticipants" type="number" min="1" defaultValue={selectedTask.maxParticipants} required className="h-11 rounded-xl border-2" />
                 </div>
                 <div className="flex items-center space-x-2 pt-2">
                   <input 

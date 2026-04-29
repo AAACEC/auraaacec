@@ -165,6 +165,7 @@ export function AdminPanel({
                 name="maxParticipants" 
                 type="number" 
                 min="1" 
+                required
                 className="h-10 rounded-xl border-2" 
                 value={maxParticipants}
                 onChange={(e) => setMaxParticipants(e.target.value ? parseInt(e.target.value) : '')}

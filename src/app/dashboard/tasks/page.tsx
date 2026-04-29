@@ -61,15 +61,11 @@ export default async function TasksPage(props: {
   let availabilityFilter = undefined
   if (availability === 'available') {
     availabilityFilter = or(
-      isNull(tasks.maxParticipants),
       isNull(assignmentCounts.count),
       lt(assignmentCounts.count, tasks.maxParticipants)
     )
   } else if (availability === 'full') {
-    availabilityFilter = and(
-      isNotNull(tasks.maxParticipants),
-      gte(assignmentCounts.count, tasks.maxParticipants)
-    )
+    availabilityFilter = gte(assignmentCounts.count, tasks.maxParticipants)
   }
 
   // Main Query - Hide tasks where user already has an APPROVED submission

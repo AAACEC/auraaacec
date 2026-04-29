@@ -31,7 +31,7 @@ export async function createTask(formData: FormData) {
   const originArea = formData.get('originArea') as any
   const auraValue = parseInt(formData.get('auraValue') as string, 10)
   const maxParticipantsRaw = formData.get('maxParticipants') as string
-  const maxParticipants = maxParticipantsRaw ? parseInt(maxParticipantsRaw, 10) : null
+  const maxParticipants = parseInt(maxParticipantsRaw, 10) || 1
   const requiresAttachment = formData.get('requiresAttachment') === 'on'
   
   // New: Get assigned members from form
@@ -121,6 +121,11 @@ export async function validateSubmission(formData: FormData) {
       userId: sub.memberId,
       message: `Sua prova para "${task.title}" foi rejeitada. Verifique com a diretoria.`,
     })
+
+    // Re-open the task if it was finalized, as there is now an open slot again
+    if (task.status === 'Finalizada') {
+      await db.update(tasks).set({ status: 'Ativa' }).where(eq(tasks.id, task.id))
+    }
   }
 
   revalidatePath('/dashboard')
@@ -160,7 +165,7 @@ export async function updateTask(formData: FormData) {
   const originArea = formData.get('originArea') as any
   const auraValue = parseInt(formData.get('auraValue') as string, 10)
   const maxParticipantsRaw = formData.get('maxParticipants') as string
-  const maxParticipants = maxParticipantsRaw ? parseInt(maxParticipantsRaw, 10) : null
+  const maxParticipants = parseInt(maxParticipantsRaw, 10) || 1
   const requiresAttachment = formData.get('requiresAttachment') === 'on'
 
   await db.update(tasks)
