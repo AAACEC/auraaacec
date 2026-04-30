@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { db } from '@/db'
 import { profiles, tasks, submissions, notifications, taskAssignments } from '@/db/schema'
-import { eq, desc, and, asc, sql, isNull, or, lt, gte, isNotNull, notExists } from 'drizzle-orm'
+import { eq, desc, and, asc, sql, isNull, or, lt, gte, isNotNull, notExists, inArray } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 
 import { DashboardHeader } from '../components/header'
@@ -15,6 +15,7 @@ export default async function TasksPage(props: {
   const area = typeof searchParams.course === 'string' ? searchParams.course : undefined;
   const availability = typeof searchParams.availability === 'string' ? searchParams.availability : undefined;
   const sortBy = typeof searchParams.sort === 'string' ? searchParams.sort : 'newest';
+  const query = typeof searchParams.q === 'string' ? searchParams.q : undefined;
 
   const supabase = await createClient()
 
@@ -43,9 +44,10 @@ export default async function TasksPage(props: {
     .where(and(eq(notifications.userId, user.id), eq(notifications.isRead, false)))
     .orderBy(desc(notifications.createdAt))
 
-  // 3. Fetch Active Tasks (Basic Filters)
-  const taskFilters = [eq(tasks.status, 'Ativa')];
+  // 3. Fetch Tasks (Basic Filters)
+  const taskFilters = [inArray(tasks.status, ['Ativa', 'Finalizada'])];
   if (area && area !== 'all') taskFilters.push(eq(tasks.originArea, area as any));
+  if (query) taskFilters.push(sql`title ilike ${'%' + query + '%'}`);
 
   // Subquery for assignment counts
   const assignmentCounts = db

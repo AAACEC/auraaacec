@@ -5,12 +5,13 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Send, Pencil, Trash2, Users, Briefcase, X, Loader2 } from 'lucide-react'
+import { Send, Pencil, Trash2, Users, Briefcase, X, Loader2, CheckCircle2, Lock, Clock, Rocket } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { submitTaskProof, joinTask, leaveTask } from '@/app/dashboard/member-actions'
-import { deleteTask, updateTask } from '@/app/dashboard/admin-actions'
+import { deleteTask, updateTask, finalizeTask, grantAuraDirectly } from '@/app/dashboard/admin-actions'
 import { toast } from 'sonner'
 import { useState, useTransition } from 'react'
+import { cn } from '@/lib/utils'
 
 export function BountyBoard({ 
   activeTasks, 
@@ -26,18 +27,21 @@ export function BountyBoard({
   isAdminOrDirector?: boolean
 }) {
   const [selectedTask, setSelectedTask] = useState<any | null>(null)
-  const [modalType, setModalType] = useState<'submit' | 'edit' | 'delete' | null>(null)
+  const [modalType, setModalType] = useState<'submit' | 'edit' | 'delete' | 'finalize' | 'grant' | null>(null)
+  const [selectedMember, setSelectedMember] = useState<any | null>(null)
   const [isPending, startTransition] = useTransition()
   const [actionTaskId, setActionTaskId] = useState<string | null>(null)
 
-  const openModal = (task: any, type: 'submit' | 'edit' | 'delete') => {
+  const openModal = (task: any, type: 'submit' | 'edit' | 'delete' | 'finalize' | 'grant', member?: any) => {
     setSelectedTask(task)
     setModalType(type)
+    if (member) setSelectedMember(member)
   }
 
   const closeModal = () => {
     setSelectedTask(null)
     setModalType(null)
+    setSelectedMember(null)
   }
 
   const handleSubmit = async (formData: FormData) => {
@@ -122,6 +126,32 @@ export function BountyBoard({
     })
   }
 
+  const handleFinalize = async () => {
+    if (!selectedTask) return
+    startTransition(async () => {
+      try {
+        await finalizeTask(selectedTask.id)
+        toast.success('Tarefa finalizada!')
+        closeModal()
+      } catch (error) {
+        toast.error('Erro ao finalizar.')
+      }
+    })
+  }
+
+  const handleGrantAura = async () => {
+    if (!selectedTask || !selectedMember) return
+    startTransition(async () => {
+      try {
+        await grantAuraDirectly(selectedTask.id, selectedMember.userId)
+        toast.success(`Aura atribuída para ${selectedMember.userNickname}!`)
+        closeModal()
+      } catch (error) {
+        toast.error('Erro ao atribuir aura.')
+      }
+    })
+  }
+
   return (
     <div className="space-y-4">
       {activeTasks.length > 0 ? (
@@ -133,18 +163,60 @@ export function BountyBoard({
             const isParticipant = taskAssignments.some(a => a.userId === currentUserId)
             const isFull = task.maxParticipants !== null && participantCount >= task.maxParticipants
             const isLoading = actionTaskId === task.id && isPending
+            const isFinalized = task.status === 'Finalizada'
+            const isInProgress = !isFinalized && participantCount > 0
 
             return (
-              <Card key={task.id} className="group relative border-2 p-6 rounded-2xl bg-card hover:border-primary/50 transition-all shadow-sm">
+              <Card 
+                key={task.id} 
+                className={cn(
+                  "group relative border-2 p-6 rounded-2xl bg-card transition-all shadow-sm",
+                  isFinalized ? "opacity-75 grayscale-[0.5] border-muted" : "hover:border-primary/50"
+                )}
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                   <div className="space-y-2 flex-1">
-                    <div className="flex items-center gap-3">
-                      <p className="font-bold text-xl leading-tight tracking-tight text-foreground">{task.title}</p>
-                      <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 font-black text-xs px-2 py-0.5 uppercase tracking-tighter">
-                        {task.auraValue} AURA
-                      </Badge>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className={cn(
+                        "font-bold text-xl leading-tight tracking-tight text-foreground",
+                        isFinalized && "line-through text-muted-foreground"
+                      )}>
+                        {task.title}
+                      </p>
+                      
+                      <div className="flex items-center gap-2">
+                        {isFinalized ? (
+                          <Badge variant="secondary" className="bg-muted text-muted-foreground font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
+                            <Lock className="h-2.5 w-2.5" /> Concluída
+                          </Badge>
+                        ) : isInProgress ? (
+                          <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
+                            <Clock className="h-2.5 w-2.5" /> Em Andamento
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
+                            <Rocket className="h-2.5 w-2.5" /> Aberta
+                          </Badge>
+                        )}
+
+                        {!isFinalized && (
+                          <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter border-2">
+                            {task.auraValue} AURA
+                          </Badge>
+                        )}
+                      </div>
+
                       {isAdminOrDirector && (
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {!isFinalized && (
+                            <button 
+                              onClick={() => openModal(task, 'finalize')} 
+                              className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-green-50 text-muted-foreground hover:text-green-600 transition-colors"
+                              title="Marcar como Finalizada"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <button onClick={() => openModal(task, 'edit')} className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
@@ -156,16 +228,27 @@ export function BountyBoard({
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase tracking-widest font-bold">
                       <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5" /> {task.originArea}</span>
-                      <span className={`flex items-center gap-1.5 ${isFull && !isParticipant ? 'text-red-600' : ''}`}>
+                      <span className={`flex items-center gap-1.5 ${isFull && !isParticipant && !isFinalized ? 'text-red-600' : ''}`}>
                         <Users className="h-3.5 w-3.5" /> {participantCount}/{task.maxParticipants}
                       </span>                    </div>
 
                     {participantCount > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3">
                         {taskAssignments.map((a: any) => (
-                          <span key={a.id} className="text-[13px] bg-muted/70 px-4 py-1.5 rounded-full text-foreground font-black border-2 uppercase tracking-tight shadow-sm transition-all hover:bg-muted">
-                            {a.userNickname}
-                          </span>
+                          <div key={a.id} className="group/member relative">
+                            <span className="text-[13px] bg-muted/70 px-4 py-1.5 rounded-full text-foreground font-black border-2 uppercase tracking-tight shadow-sm transition-all hover:bg-muted inline-flex items-center gap-2">
+                              {a.userNickname}
+                              {isAdminOrDirector && !isFinalized && (
+                                <button 
+                                  onClick={() => openModal(task, 'grant', a)}
+                                  className="h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:scale-110 transition-transform"
+                                  title="Atribuir Aura Diretamente"
+                                >
+                                  <CheckCircle2 className="h-3 w-3" />
+                                </button>
+                              )}
+                            </span>
+                          </div>
                         ))}
                       </div>
                     )}
@@ -178,7 +261,9 @@ export function BountyBoard({
                   </div>
                   
                   <div className="flex items-center gap-2 shrink-0">
-                    {alreadySubmitted ? (
+                    {isFinalized ? (
+                      <Badge variant="outline" className="border-muted-foreground/20 text-muted-foreground font-bold px-6 py-2 uppercase text-xs tracking-widest bg-muted/20">Concluída</Badge>
+                    ) : alreadySubmitted ? (
                       <Badge variant="secondary" className="bg-muted text-muted-foreground font-bold px-6 py-2 uppercase text-xs tracking-widest">Enviada</Badge>
                     ) : isParticipant ? (
                       <>
@@ -217,7 +302,7 @@ export function BountyBoard({
         </div>
       ) : (
         <div className="flex h-[200px] items-center justify-center rounded-2xl border-2 border-dashed bg-muted/30">
-          <p className="text-sm text-muted-foreground font-medium italic">Sem tasks ativas no momento.</p>
+          <p className="text-sm text-muted-foreground font-medium italic">Sem tasks no momento.</p>
         </div>
       )}
 
@@ -346,6 +431,57 @@ export function BountyBoard({
                 </button>
               </DialogFooter>
             </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={modalType === 'finalize'} onOpenChange={(open) => !open && !isPending && closeModal()}>
+        <DialogContent className="sm:max-w-[400px] rounded-2xl">
+          {selectedTask && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold tracking-tight">Finalizar Task</DialogTitle>
+                <DialogDescription className="font-medium">
+                  Deseja marcar <span className="text-primary font-bold">"{selectedTask.title}"</span> como Finalizada? 
+                  Isso impedirá novas participações.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="pt-6 flex-row gap-3">
+                <button type="button" disabled={isPending} onClick={closeModal} className="flex-1 rounded-xl border-2 h-12 text-sm font-bold hover:bg-muted transition-colors disabled:opacity-50 uppercase tracking-widest">Cancelar</button>
+                <button 
+                  onClick={handleFinalize} 
+                  disabled={isPending} 
+                  className="flex-1 rounded-xl bg-green-600 text-white h-12 text-sm font-black hover:bg-green-700 transition-colors active:scale-95 disabled:opacity-50 uppercase tracking-widest shadow-md"
+                >
+                  {isPending ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : 'Finalizar'}
+                </button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={modalType === 'grant'} onOpenChange={(open) => !open && !isPending && closeModal()}>
+        <DialogContent className="sm:max-w-[400px] rounded-2xl">
+          {selectedTask && selectedMember && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold tracking-tight">Atribuir Aura</DialogTitle>
+                <DialogDescription className="font-medium">
+                  Deseja atribuir <span className="text-primary font-bold">{selectedTask.auraValue} AURA</span> diretamente para <span className="text-primary font-bold">{selectedMember.userNickname}</span>?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="pt-6 flex-row gap-3">
+                <button type="button" disabled={isPending} onClick={closeModal} className="flex-1 rounded-xl border-2 h-12 text-sm font-bold hover:bg-muted transition-colors disabled:opacity-50 uppercase tracking-widest">Cancelar</button>
+                <button 
+                  onClick={handleGrantAura} 
+                  disabled={isPending} 
+                  className="flex-1 rounded-xl bg-primary text-white h-12 text-sm font-black hover:bg-primary/90 transition-colors active:scale-95 disabled:opacity-50 uppercase tracking-widest shadow-md"
+                >
+                  {isPending ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : 'Atribuir'}
+                </button>
+              </DialogFooter>
+            </>
           )}
         </DialogContent>
       </Dialog>

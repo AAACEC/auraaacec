@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Label } from '@/components/ui/label'
+import { Search } from 'lucide-react'
 
 export function RankingFilters({ 
   courses, 
@@ -20,7 +21,7 @@ export function RankingFilters({
 
   const updateFilters = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (value === 'all') {
+    if (value === 'all' || value === '') {
       params.delete(key)
     } else {
       params.set(key, value)
@@ -29,7 +30,26 @@ export function RankingFilters({
   }
 
   return (
-    <div className="grid gap-4 p-4 rounded-xl border-2 md:grid-cols-3 lg:grid-cols-4">
+    <div className="grid gap-4 p-4 rounded-xl border-2 md:grid-cols-3 lg:grid-cols-5">
+      {/* Busca */}
+      <div className="space-y-2 lg:col-span-1">
+        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Buscar</Label>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input 
+            type="text"
+            placeholder={isTaskPage ? "Título da task..." : "Nome ou apelido..."}
+            className="w-full h-10 pl-9 pr-3 rounded-xl border-2 border-input bg-background text-sm outline-none focus:border-primary transition-all shadow-sm"
+            defaultValue={searchParams.get('q') || ''}
+            onChange={(e) => {
+              const val = e.target.value
+              const timeoutId = setTimeout(() => updateFilters('q', val), 500)
+              return () => clearTimeout(timeoutId)
+            }}
+          />
+        </div>
+      </div>
+
       {/* Filtro de Área / Curso */}
       <div className="space-y-2">
         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{isTaskPage ? 'Área' : 'Curso'}</Label>

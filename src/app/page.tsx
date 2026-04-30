@@ -1,6 +1,6 @@
 import { db } from "@/db/index";
 import { profiles } from "@/db/schema";
-import { desc, eq, and, sql } from "drizzle-orm";
+import { desc, eq, and, sql, or } from "drizzle-orm";
 import { RankingFilters } from "./components/ranking-filters";
 
 export default async function Home(props: {
@@ -10,11 +10,16 @@ export default async function Home(props: {
   const course = typeof searchParams.course === 'string' ? searchParams.course : undefined;
   const entryYear = typeof searchParams.entryYear === 'string' ? searchParams.entryYear : undefined;
   const role = typeof searchParams.role === 'string' ? searchParams.role : undefined;
+  const query = typeof searchParams.q === 'string' ? searchParams.q : undefined;
 
   const filters = [];
   if (course) filters.push(eq(profiles.course, course));
   if (entryYear) filters.push(eq(profiles.entryYear, entryYear));
   if (role) filters.push(eq(profiles.role, role as any));
+  if (query) filters.push(or(
+    sql`nickname ilike ${'%' + query + '%'}`,
+    sql`full_name ilike ${'%' + query + '%'}`
+  ));
 
   const ranking = await db.select()
     .from(profiles)
@@ -44,43 +49,45 @@ export default async function Home(props: {
         />
 
         <div className="rounded-xl border shadow-sm overflow-hidden bg-card border-2">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-muted/30 border-b-2">
-              <tr>
-                <th className="h-12 px-4 font-bold text-foreground w-20 text-center uppercase tracking-widest text-[10px]">#</th>
-                <th className="h-12 px-4 font-bold text-foreground uppercase tracking-widest text-[10px]">Nome</th>
-                <th className="h-12 px-4 font-bold text-foreground uppercase tracking-widest text-[10px]">Curso</th>
-                <th className="h-12 px-4 font-bold text-foreground text-center uppercase tracking-widest text-[10px]">Ano</th>
-                <th className="h-12 px-4 font-bold text-foreground text-right uppercase tracking-widest text-[10px]">Aura</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ranking.map((member, index) => (
-                <tr key={member.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
-                  <td className="p-4 align-middle font-bold text-center text-muted-foreground">
-                    {index + 1}
-                  </td>
-                  <td className="p-4 align-middle">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-base tracking-tight">{member.nickname}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 align-middle text-muted-foreground font-medium">{member.course}</td>
-                  <td className="p-4 align-middle text-center text-muted-foreground font-medium">{member.entryYear.slice(0, 4)}</td>
-                  <td className="p-4 align-middle text-right font-black text-primary text-xl tracking-tighter">
-                    {member.accumulatedAura}
-                  </td>
-                </tr>
-              ))}
-              {ranking.length === 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left min-w-[600px] md:min-w-0">
+              <thead className="bg-muted/30 border-b-2">
                 <tr>
-                  <td colSpan={5} className="p-10 text-center text-muted-foreground italic">
-                    Nenhum integrante encontrado com estes filtros.
-                  </td>
+                  <th className="h-12 px-4 font-bold text-foreground w-20 text-center uppercase tracking-widest text-[10px]">#</th>
+                  <th className="h-12 px-4 font-bold text-foreground uppercase tracking-widest text-[10px]">Nome</th>
+                  <th className="h-12 px-4 font-bold text-foreground uppercase tracking-widest text-[10px]">Curso</th>
+                  <th className="h-12 px-4 font-bold text-foreground text-center uppercase tracking-widest text-[10px]">Ano</th>
+                  <th className="h-12 px-4 font-bold text-foreground text-right uppercase tracking-widest text-[10px]">Aura</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {ranking.map((member, index) => (
+                  <tr key={member.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
+                    <td className="p-4 align-middle font-bold text-center text-muted-foreground">
+                      {index + 1}
+                    </td>
+                    <td className="p-4 align-middle">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-base tracking-tight">{member.nickname}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground font-medium">{member.course}</td>
+                    <td className="p-4 align-middle text-center text-muted-foreground font-medium">{member.entryYear.slice(0, 4)}</td>
+                    <td className="p-4 align-middle text-right font-black text-primary text-xl tracking-tighter">
+                      {member.accumulatedAura}
+                    </td>
+                  </tr>
+                ))}
+                {ranking.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="p-10 text-center text-muted-foreground italic">
+                      Nenhum integrante encontrado com estes filtros.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
