@@ -90,6 +90,64 @@ export function BountyBoard({
     })
   }
 
+  const handleSubmit = async (formData: FormData) => {
+    startTransition(async () => {
+      try {
+        await submitTaskProof(formData)
+        toast.success('Task submetida!')
+        closeModal()
+      } catch (error) {
+        toast.error('Erro ao enviar.')
+      }
+    })
+  }
+
+  const handleDirectSubmit = async (taskId: string) => {
+    const formData = new FormData()
+    formData.append('taskId', taskId)
+    formData.append('attachmentLink', '')
+    
+    setActionTaskId(taskId)
+    startTransition(async () => {
+      try {
+        await submitTaskProof(formData)
+        toast.success('Task concluída com sucesso!')
+      } catch (error) {
+        toast.error('Erro ao concluir task.')
+      } finally {
+        setActionTaskId(null)
+      }
+    })
+  }
+
+  const handleJoin = async (taskId: string) => {
+    setActionTaskId(taskId)
+    startTransition(async () => {
+      try {
+        await joinTask(taskId)
+        toast.success('Você assumiu esta task!')
+      } catch (error: any) {
+        toast.error(error.message || 'Erro ao participar.')
+      } finally {
+        setActionTaskId(null)
+      }
+    })
+  }
+
+  const handleLeave = async (taskId: string) => {
+    setActionTaskId(taskId)
+    startTransition(async () => {
+      try {
+        await leaveTask(taskId)
+        toast.success('Você saiu da task.')
+      } catch (error) {
+        toast.error('Erro ao sair.')
+      } finally {
+        setActionTaskId(null)
+      }
+    })
+  }
+
   const handleDelete = async (formData: FormData) => {
     startTransition(async () => {
       try {
