@@ -226,34 +226,6 @@ export function BountyBoard({
                           </Badge>
                         )}
                       </div>
-
-                      {isAdminOrDirector && (
-                        <div className="flex items-center gap-1.5 bg-muted p-1.5 rounded-xl border-2 ml-2 shadow-sm">
-                          {!isFinalized && (
-                            <button 
-                              onClick={() => openModal(task, 'finalize')} 
-                              className="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-green-100 text-muted-foreground hover:text-green-600 transition-colors border-2 border-transparent hover:border-green-200"
-                              title="Finalizar e dar Aura"
-                            >
-                              <CheckCircle2 className="h-5 w-5" />
-                            </button>
-                          )}
-                          <button 
-                            onClick={() => openModal(task, 'edit')} 
-                            className="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-white text-muted-foreground hover:text-primary transition-colors border-2 border-transparent hover:border-primary/20"
-                            title="Editar"
-                          >
-                            <Pencil className="h-5 w-5" />
-                          </button>
-                          <button 
-                            onClick={() => openModal(task, 'delete')} 
-                            className="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-red-100 text-muted-foreground hover:text-red-600 transition-colors border-2 border-transparent hover:border-red-200"
-                            title="Excluir"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </button>
-                        </div>
-                      )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground uppercase tracking-widest font-bold">
@@ -280,47 +252,79 @@ export function BountyBoard({
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-2 shrink-0 lg:ml-6 mt-4 lg:mt-0">
-                    {isFinalized ? (
-                      <Badge variant="outline" className="border-muted-foreground/20 text-muted-foreground font-bold px-6 py-2.5 uppercase text-xs tracking-widest bg-muted/20">Concluída</Badge>
-                    ) : alreadySubmitted ? (
-                      <Badge variant="secondary" className="bg-muted text-muted-foreground font-bold px-6 py-2.5 uppercase text-xs tracking-widest border-2">Em Validação</Badge>
-                    ) : isParticipant ? (
-                      <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 lg:ml-6 mt-4 lg:mt-0">
+                    {/* Admin Actions Area */}
+                    {isAdminOrDirector && (
+                      <div className="flex items-center gap-1.5 bg-muted p-1.5 rounded-xl border-2 shadow-sm">
+                        {!isFinalized && (
+                          <button 
+                            onClick={() => openModal(task, 'finalize')} 
+                            className="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-green-100 text-muted-foreground hover:text-green-600 transition-colors border-2 border-transparent hover:border-green-200"
+                            title="Finalizar e dar Aura"
+                          >
+                            <CheckCircle2 className="h-5 w-5" />
+                          </button>
+                        )}
                         <button 
-                          onClick={() => task.requiresAttachment ? openModal(task, 'submit') : handleDirectSubmit(task.id)}
-                          disabled={isLoading}
-                          className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-xs font-black bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 transition-all shadow-sm active:scale-95 disabled:opacity-50 uppercase tracking-widest"
+                          onClick={() => openModal(task, 'edit')} 
+                          className="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-white text-muted-foreground hover:text-primary transition-colors border-2 border-transparent hover:border-primary/20"
+                          title="Editar"
                         >
-                          {isLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              {task.requiresAttachment ? 'Enviar Anexo' : 'Finalizar'} 
-                              <Send className="ml-2.5 h-4 w-4" />
-                            </>
-                          )}
+                          <Pencil className="h-5 w-5" />
                         </button>
                         <button 
-                          onClick={() => handleLeave(task.id)}
-                          disabled={isLoading}
-                          className="h-11 w-11 inline-flex items-center justify-center rounded-xl border-2 border-red-100 hover:bg-red-50 hover:text-red-600 text-muted-foreground transition-all active:scale-95 disabled:opacity-50"
-                          title="Sair da task"
+                          onClick={() => openModal(task, 'delete')} 
+                          className="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-red-100 text-muted-foreground hover:text-red-600 transition-colors border-2 border-transparent hover:border-red-200"
+                          title="Excluir"
                         >
-                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-5 w-5" />}
+                          <Trash2 className="h-5 w-5" />
                         </button>
                       </div>
-                    ) : isFull ? (
-                      <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50 font-black px-6 py-2.5 uppercase tracking-widest text-xs">Lotada</Badge>
-                    ) : (
-                      <button 
-                        onClick={() => handleJoin(task.id)}
-                        disabled={isLoading}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-xs font-black border-2 border-primary text-primary hover:bg-primary hover:text-white h-11 px-10 transition-all active:scale-95 disabled:opacity-50 uppercase tracking-widest"
-                      >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Participar'}
-                      </button>
                     )}
+
+                    {/* Member Actions Area */}
+                    <div className="flex items-center gap-2">
+                      {isFinalized ? (
+                        <Badge variant="outline" className="border-muted-foreground/20 text-muted-foreground font-bold px-6 py-2.5 uppercase text-xs tracking-widest bg-muted/20 whitespace-nowrap">Concluída</Badge>
+                      ) : alreadySubmitted ? (
+                        <Badge variant="secondary" className="bg-muted text-muted-foreground font-bold px-6 py-2.5 uppercase text-xs tracking-widest border-2 whitespace-nowrap">Em Validação</Badge>
+                      ) : isParticipant ? (
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => task.requiresAttachment ? openModal(task, 'submit') : handleDirectSubmit(task.id)}
+                            disabled={isLoading}
+                            className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-xs font-black bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 transition-all shadow-sm active:scale-95 disabled:opacity-50 uppercase tracking-widest"
+                          >
+                            {isLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                {task.requiresAttachment ? 'Enviar Anexo' : 'Finalizar'} 
+                                <Send className="ml-2.5 h-4 w-4" />
+                              </>
+                            )}
+                          </button>
+                          <button 
+                            onClick={() => handleLeave(task.id)}
+                            disabled={isLoading}
+                            className="h-11 w-11 inline-flex items-center justify-center rounded-xl border-2 border-red-100 hover:bg-red-50 hover:text-red-600 text-muted-foreground transition-all active:scale-95 disabled:opacity-50"
+                            title="Sair da task"
+                          >
+                            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-5 w-5" />}
+                          </button>
+                        </div>
+                      ) : isFull ? (
+                        <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50 font-black px-6 py-2.5 uppercase tracking-widest text-xs whitespace-nowrap">Lotada</Badge>
+                      ) : (
+                        <button 
+                          onClick={() => handleJoin(task.id)}
+                          disabled={isLoading}
+                          className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-xs font-black border-2 border-primary text-primary hover:bg-primary hover:text-white h-11 px-10 transition-all active:scale-95 disabled:opacity-50 uppercase tracking-widest"
+                        >
+                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Participar'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card>
