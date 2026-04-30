@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Send, Pencil, Trash2, Users, Briefcase, X, Loader2, CheckCircle2, Lock, Clock, Rocket, Search, UserPlus } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { submitTaskProof, joinTask, leaveTask } from '@/app/dashboard/member-actions'
-import { deleteTask, updateTask, finalizeTask, grantAuraDirectly } from '@/app/dashboard/admin-actions'
+import { deleteTask, updateTask, finalizeTask } from '@/app/dashboard/admin-actions'
 import { toast } from 'sonner'
 import { useState, useTransition, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -228,7 +228,7 @@ export function BountyBoard({
                       </div>
 
                       {isAdminOrDirector && (
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-1 transition-opacity">
                           {!isFinalized && (
                             <button 
                               onClick={() => openModal(task, 'finalize')} 
@@ -247,11 +247,18 @@ export function BountyBoard({
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase tracking-widest font-bold">
+                    
+                    <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-muted-foreground uppercase tracking-widest font-bold">
                       <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5" /> {task.originArea}</span>
                       <span className={`flex items-center gap-1.5 ${isFull && !isParticipant && !isFinalized ? 'text-red-600' : ''}`}>
                         <Users className="h-3.5 w-3.5" /> {participantCount}/{task.maxParticipants}
-                      </span>                    </div>
+                      </span>
+                      {task.creatorNickname && (
+                        <span className="flex items-center gap-1.5 opacity-60">
+                          Criado por: <span className="text-foreground">{task.creatorNickname}</span>
+                        </span>
+                      )}
+                    </div>
 
                     {participantCount > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3">

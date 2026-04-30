@@ -50,16 +50,6 @@ export default async function TasksPage(props: {
     .where(and(eq(notifications.userId, user.id), eq(notifications.isRead, false)))
     .orderBy(desc(notifications.createdAt))
 
-  // 3. Fetch Tasks (Basic Filters)
-  const taskFilters = [];
-  if (status === 'all') {
-    taskFilters.push(inArray(tasks.status, ['Ativa', 'Finalizada']));
-  } else {
-    taskFilters.push(eq(tasks.status, status as any));
-  }
-  if (area && area !== 'all') taskFilters.push(eq(tasks.originArea, area as any));
-  if (query) taskFilters.push(sql`title ilike ${'%' + query + '%'}`);
-
   // Subquery for assignment counts
   const assignmentCounts = db
     .select({
@@ -69,6 +59,22 @@ export default async function TasksPage(props: {
     .from(taskAssignments)
     .groupBy(taskAssignments.taskId)
     .as('assignment_counts')
+
+  // 3. Fetch Tasks (Basic Filters)
+  const taskFilters = [];
+  if (status === 'all') {
+    taskFilters.push(inArray(tasks.status, ['Ativa', 'Finalizada']));
+  } else if (status === 'Ativa') {
+    taskFilters.push(eq(tasks.status, 'Ativa'));
+    taskFilters.push(isNull(assignmentCounts.count));
+  } else if (status === 'EmAndamento') {
+    taskFilters.push(eq(tasks.status, 'Ativa'));
+    taskFilters.push(isNotNull(assignmentCounts.count));
+  } else {
+    taskFilters.push(eq(tasks.status, status as any));
+  }
+  if (area && area !== 'all') taskFilters.push(eq(tasks.originArea, area as any));
+  if (query) taskFilters.push(sql`title ilike ${'%' + query + '%'}`);
 
   // Build the availability filter
   let availabilityFilter = undefined
@@ -85,9 +91,11 @@ export default async function TasksPage(props: {
   const results = await db
     .select({
       task: tasks,
+      creatorNickname: profiles.nickname,
     })
     .from(tasks)
     .leftJoin(assignmentCounts, eq(tasks.id, assignmentCounts.taskId))
+    .leftJoin(profiles, eq(tasks.createdBy, profiles.id))
     .where(and(
       ...taskFilters, 
       availabilityFilter,
@@ -108,7 +116,10 @@ export default async function TasksPage(props: {
              desc(tasks.createdAt))
     .limit(100)
 
-  const activeTasksWithCount = results.map(r => r.task)
+  const activeTasksWithCount = results.map(r => ({
+    ...r.task,
+    creatorNickname: r.creatorNickname
+  }))
 
   // 4. Fetch User Submissions (All status to show on cards)
   const userSubmissions = await db.select({

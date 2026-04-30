@@ -170,11 +170,3 @@ export async function updateProfile(formData: FormData) {
 
   revalidatePath('/dashboard')
 }
-
-export async function markNotificationAsRead(notificationId: string) {
-  await db.update(notifications)
-    .set({ isRead: true })
-    .where(eq(notifications.id, notificationId))
-
-  revalidatePath('/dashboard')
-}

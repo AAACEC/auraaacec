@@ -108,7 +108,8 @@ export function RankingFilters({
               onChange={(e) => updateFilters('status', e.target.value)}
             >
               <option value="all">Ver Tudo</option>
-              <option value="Ativa">Ativas</option>
+              <option value="Ativa">Abertas</option>
+              <option value="EmAndamento">Em Andamento</option>
               <option value="Finalizada">Finalizadas</option>
             </select>
           </div>
