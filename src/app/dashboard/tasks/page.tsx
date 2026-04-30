@@ -3,17 +3,22 @@ import { db } from '@/db'
 import { profiles, tasks, submissions, notifications, taskAssignments } from '@/db/schema'
 import { eq, desc, and, asc, sql, isNull, or, lt, gte, isNotNull, notExists, inArray } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
+import { Metadata } from 'next'
 
 import { DashboardHeader } from '../components/header'
 import { BountyBoard } from '../components/bounty-board'
 import { RankingFilters } from '@/app/components/ranking-filters'
+
+export const metadata: Metadata = {
+  title: "Mural de Tasks",
+};
 
 export default async function TasksPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const searchParams = await props.searchParams;
   const area = typeof searchParams.course === 'string' ? searchParams.course : undefined;
-  const status = typeof searchParams.status === 'string' ? searchParams.status : 'Ativa';
+  const status = typeof searchParams.status === 'string' ? searchParams.status : 'all';
   const availability = typeof searchParams.availability === 'string' ? searchParams.availability : undefined;
   const sortBy = typeof searchParams.sort === 'string' ? searchParams.sort : 'newest';
   const query = typeof searchParams.q === 'string' ? searchParams.q : undefined;

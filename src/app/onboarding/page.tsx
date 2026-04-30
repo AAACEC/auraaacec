@@ -1,6 +1,11 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { OnboardingForm } from './onboarding-form'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: "Onboarding",
+};
 
 export default async function OnboardingPage() {
   const supabase = await createClient()

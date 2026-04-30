@@ -1,5 +1,10 @@
 import { signInWithGoogle } from './actions'
 import { AlertCircle } from 'lucide-react'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: "Login",
+};
 
 export default async function LoginPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>

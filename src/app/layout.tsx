@@ -12,8 +12,11 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "AurAAACEC",
-  description: "Plataforma de Gamificação da AAACEC",
+  title: {
+    template: "%s | AurAAACEC",
+    default: "AurAAACEC",
+  },
+  description: "O Campeonato Oficial de Aura da AAACEC",
 };
 
 export default function RootLayout({

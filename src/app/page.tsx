@@ -2,6 +2,11 @@ import { db } from "@/db/index";
 import { profiles } from "@/db/schema";
 import { desc, eq, and, sql, or } from "drizzle-orm";
 import { RankingFilters } from "./components/ranking-filters";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Ranking",
+};
 
 export default async function Home(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>

@@ -4,6 +4,11 @@ import { profiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import { SettingsForm } from './settings-form'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: "Configurações",
+};
 
 export default async function SettingsPage() {
   const supabase = await createClient()

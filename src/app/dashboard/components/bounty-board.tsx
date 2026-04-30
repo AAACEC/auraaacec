@@ -29,7 +29,7 @@ export function BountyBoard({
   allProfiles?: any[]
 }) {
   const [selectedTask, setSelectedTask] = useState<any | null>(null)
-  const [modalType, setModalType] = useState<'submit' | 'edit' | 'delete' | 'finalize' | 'grant' | null>(null)
+  const [modalType, setModalType] = useState<'submit' | 'edit' | 'delete' | 'finalize' | null>(null)
   const [selectedMember, setSelectedMember] = useState<any | null>(null)
   const [isPending, startTransition] = useTransition()
   const [actionTaskId, setActionTaskId] = useState<string | null>(null)
@@ -38,7 +38,7 @@ export function BountyBoard({
   const [editingAssignedMemberIds, setEditingAssignedMemberIds] = useState<string[]>([])
   const [memberSearch, setMemberSearch] = useState('')
 
-  const openModal = (task: any, type: 'submit' | 'edit' | 'delete' | 'finalize' | 'grant', member?: any) => {
+  const openModal = (task: any, type: 'submit' | 'edit' | 'delete' | 'finalize', member?: any) => {
     setSelectedTask(task)
     setModalType(type)
     if (member) setSelectedMember(member)
@@ -173,19 +173,6 @@ export function BountyBoard({
     })
   }
 
-  const handleGrantAura = async () => {
-    if (!selectedTask || !selectedMember) return
-    startTransition(async () => {
-      try {
-        await grantAuraDirectly(selectedTask.id, selectedMember.userId)
-        toast.success(`Aura atribuída para ${selectedMember.userNickname}!`)
-        closeModal()
-      } catch (error) {
-        toast.error('Erro ao atribuir aura.')
-      }
-    })
-  }
-
   return (
     <div className="space-y-4">
       {activeTasks.length > 0 ? (
@@ -272,15 +259,6 @@ export function BountyBoard({
                           <div key={a.id} className="group/member relative">
                             <span className="text-[13px] bg-muted/70 px-4 py-1.5 rounded-full text-foreground font-black border-2 uppercase tracking-tight shadow-sm transition-all hover:bg-muted inline-flex items-center gap-2">
                               {a.userNickname}
-                              {isAdminOrDirector && !isFinalized && (
-                                <button 
-                                  onClick={() => openModal(task, 'grant', a)}
-                                  className="h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:scale-110 transition-transform"
-                                  title="Atribuir Aura Diretamente"
-                                >
-                                  <CheckCircle2 className="h-3 w-3" />
-                                </button>
-                              )}
                             </span>
                           </div>
                         ))}
@@ -528,31 +506,6 @@ export function BountyBoard({
                   className="flex-1 rounded-xl bg-green-600 text-white h-12 text-sm font-black hover:bg-green-700 transition-colors active:scale-95 disabled:opacity-50 uppercase tracking-widest shadow-md"
                 >
                   {isPending ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : 'Finalizar'}
-                </button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={modalType === 'grant'} onOpenChange={(open) => !open && !isPending && closeModal()}>
-        <DialogContent className="sm:max-w-[400px] rounded-2xl">
-          {selectedTask && selectedMember && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl font-bold tracking-tight">Atribuir Aura</DialogTitle>
-                <DialogDescription className="font-medium">
-                  Deseja atribuir <span className="text-primary font-bold">{selectedTask.auraValue} AURA</span> diretamente para <span className="text-primary font-bold">{selectedMember.userNickname}</span>?
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="pt-6 flex-row gap-3">
-                <button type="button" disabled={isPending} onClick={closeModal} className="flex-1 rounded-xl border-2 h-12 text-sm font-bold hover:bg-muted transition-colors disabled:opacity-50 uppercase tracking-widest">Cancelar</button>
-                <button 
-                  onClick={handleGrantAura} 
-                  disabled={isPending} 
-                  className="flex-1 rounded-xl bg-primary text-white h-12 text-sm font-black hover:bg-primary/90 transition-colors active:scale-95 disabled:opacity-50 uppercase tracking-widest shadow-md"
-                >
-                  {isPending ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : 'Atribuir'}
                 </button>
               </DialogFooter>
             </>

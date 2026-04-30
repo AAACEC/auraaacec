@@ -104,10 +104,10 @@ export function RankingFilters({
             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</Label>
             <select 
               className="w-full h-10 rounded-xl border-2 border-input bg-background px-3 text-sm outline-none focus:border-primary transition-all shadow-sm"
-              defaultValue={searchParams.get('status') || 'Ativa'}
+              defaultValue={searchParams.get('status') || 'all'}
               onChange={(e) => updateFilters('status', e.target.value)}
             >
-              <option value="all">Tudo</option>
+              <option value="all">Ver Tudo</option>
               <option value="Ativa">Ativas</option>
               <option value="Finalizada">Finalizadas</option>
             </select>

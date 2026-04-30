@@ -5,12 +5,17 @@ import { eq, desc, and } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import { ArrowRight, ClipboardList, ShieldCheck, UserCircle } from 'lucide-react'
 import Link from 'next/link'
+import { Metadata } from 'next'
 
 import { DashboardHeader } from './components/header'
 import { AdminPanel } from './components/admin-panel'
 import { StatsCards } from './components/stats-cards'
 import { RecentSubmissions } from './components/recent-submissions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
 export default async function DashboardPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
