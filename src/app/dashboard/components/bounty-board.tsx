@@ -228,29 +228,29 @@ export function BountyBoard({
                       </div>
 
                       {isAdminOrDirector && (
-                        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border ml-2">
+                        <div className="flex items-center gap-1.5 bg-muted p-1.5 rounded-xl border-2 ml-2 shadow-sm">
                           {!isFinalized && (
                             <button 
                               onClick={() => openModal(task, 'finalize')} 
-                              className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-green-50 text-muted-foreground hover:text-green-600 transition-colors"
+                              className="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-green-100 text-muted-foreground hover:text-green-600 transition-colors border-2 border-transparent hover:border-green-200"
                               title="Finalizar e dar Aura"
                             >
-                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              <CheckCircle2 className="h-5 w-5" />
                             </button>
                           )}
                           <button 
                             onClick={() => openModal(task, 'edit')} 
-                            className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-white text-muted-foreground hover:text-primary transition-colors"
+                            className="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-white text-muted-foreground hover:text-primary transition-colors border-2 border-transparent hover:border-primary/20"
                             title="Editar"
                           >
-                            <Pencil className="h-3.5 w-3.5" />
+                            <Pencil className="h-5 w-5" />
                           </button>
                           <button 
                             onClick={() => openModal(task, 'delete')} 
-                            className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                            className="h-10 w-10 inline-flex items-center justify-center rounded-lg hover:bg-red-100 text-muted-foreground hover:text-red-600 transition-colors border-2 border-transparent hover:border-red-200"
                             title="Excluir"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-5 w-5" />
                           </button>
                         </div>
                       )}
@@ -288,11 +288,18 @@ export function BountyBoard({
                     ) : isParticipant ? (
                       <div className="flex items-center gap-2">
                         <button 
-                          onClick={() => openModal(task, 'submit')}
+                          onClick={() => task.requiresAttachment ? openModal(task, 'submit') : handleDirectSubmit(task.id)}
                           disabled={isLoading}
                           className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-xs font-black bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 transition-all shadow-sm active:scale-95 disabled:opacity-50 uppercase tracking-widest"
                         >
-                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Enviar Prova <Send className="ml-2.5 h-4 w-4" /></>}
+                          {isLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              {task.requiresAttachment ? 'Enviar Anexo' : 'Finalizar'} 
+                              <Send className="ml-2.5 h-4 w-4" />
+                            </>
+                          )}
                         </button>
                         <button 
                           onClick={() => handleLeave(task.id)}
