@@ -191,162 +191,127 @@ export function BountyBoard({
               <Card 
                 key={task.id} 
                 className={cn(
-                  "group relative border-2 p-5 rounded-2xl bg-card transition-all shadow-sm overflow-hidden",
-                  isFinalized ? "opacity-75 grayscale-[0.5] border-muted" : "hover:border-primary/40 hover:shadow-md"
+                  "group relative border-2 p-6 rounded-2xl bg-card transition-all shadow-sm",
+                  isFinalized ? "opacity-75 grayscale-[0.5] border-muted" : "hover:border-primary/50"
                 )}
               >
-                {/* Visual indicator for status */}
-                <div className={cn(
-                  "absolute top-0 left-0 w-1 h-full",
-                  isFinalized ? "bg-muted" : isInProgress ? "bg-amber-500" : "bg-green-500"
-                )} />
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                  <div className="space-y-3 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className={cn(
+                        "font-bold text-xl leading-tight tracking-tight text-foreground",
+                        isFinalized && "line-through text-muted-foreground/60"
+                      )}>
+                        {task.title}
+                      </p>
+                      
+                      <div className="flex items-center gap-2">
+                        {isFinalized ? (
+                          <Badge variant="secondary" className="bg-muted text-muted-foreground font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
+                            <Lock className="h-2.5 w-2.5" /> Concluída
+                          </Badge>
+                        ) : isInProgress ? (
+                          <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
+                            <Clock className="h-2.5 w-2.5" /> Em Andamento
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
+                            <Rocket className="h-2.5 w-2.5" /> Aberta
+                          </Badge>
+                        )}
 
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                    <div className="space-y-2.5 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className={cn(
-                          "font-bold text-xl leading-tight tracking-tight text-foreground",
-                          isFinalized && "line-through text-muted-foreground/60"
-                        )}>
-                          {task.title}
-                        </p>
-                        
-                        <div className="flex items-center gap-1.5">
-                          {isFinalized ? (
-                            <Badge variant="secondary" className="bg-muted text-muted-foreground font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
-                              <Lock className="h-2.5 w-2.5" /> Concluída
-                            </Badge>
-                          ) : isInProgress ? (
-                            <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
-                              <Clock className="h-2.5 w-2.5" /> Em Andamento
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
-                              <Rocket className="h-2.5 w-2.5" /> Aberta
-                            </Badge>
-                          )}
-
-                          {!isFinalized && (
-                            <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter border-2">
-                              {task.auraValue} AURA
-                            </Badge>
-                          )}
-                        </div>
+                        {!isFinalized && (
+                          <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter border-2">
+                            {task.auraValue} AURA
+                          </Badge>
+                        )}
                       </div>
 
-                      {task.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl leading-relaxed font-medium">
-                          {task.description}
-                        </p>
+                      {isAdminOrDirector && (
+                        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border ml-2">
+                          {!isFinalized && (
+                            <button 
+                              onClick={() => openModal(task, 'finalize')} 
+                              className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-green-50 text-muted-foreground hover:text-green-600 transition-colors"
+                              title="Finalizar e dar Aura"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => openModal(task, 'edit')} 
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-white text-muted-foreground hover:text-primary transition-colors"
+                            title="Editar"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button 
+                            onClick={() => openModal(task, 'delete')} 
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       )}
                     </div>
-                    
-                    {/* Desktop Admin Actions */}
-                    {isAdminOrDirector && (
-                      <div className="hidden sm:flex items-center gap-1 bg-muted/30 p-1 rounded-xl border-2">
-                        {!isFinalized && (
-                          <button 
-                            onClick={() => openModal(task, 'finalize')} 
-                            className="h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-green-100 text-muted-foreground hover:text-green-600 transition-colors"
-                            title="Finalizar e dar Aura"
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
-                          </button>
-                        )}
-                        <button 
-                          onClick={() => openModal(task, 'edit')} 
-                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-white text-muted-foreground hover:text-primary transition-colors"
-                          title="Editar"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button 
-                          onClick={() => openModal(task, 'delete')} 
-                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
-                          title="Excluir"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground uppercase tracking-widest font-bold">
+                      <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5" /> {task.originArea}</span>
+                      <span className={`flex items-center gap-1.5 ${isFull && !isParticipant && !isFinalized ? 'text-red-600' : ''}`}>
+                        <Users className="h-3.5 w-3.5" /> {participantCount}/{task.maxParticipants}
+                      </span>                    
+                    </div>
+
+                    {participantCount > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {taskAssignments.map((a: any) => (
+                          <span key={a.id} className="text-[11px] bg-muted/70 px-3 py-1 rounded-full text-foreground font-black border-2 uppercase tracking-tight shadow-sm transition-all hover:bg-muted inline-flex items-center gap-2">
+                            {a.userNickname}
+                          </span>
+                        ))}
                       </div>
                     )}
-                  </div>
 
-                  {/* Metadata Row */}
-                  <div className="flex flex-wrap items-center gap-y-2 gap-x-6 pt-1 border-t-2 border-muted/30">
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest font-black">
-                      <Briefcase className="h-3.5 w-3.5 text-primary/60" /> 
-                      <span>{task.originArea}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest font-black">
-                      <Users className={cn("h-3.5 w-3.5", isFull && !isParticipant && !isFinalized ? "text-red-500" : "text-primary/60")} /> 
-                      <span className={cn(isFull && !isParticipant && !isFinalized && "text-red-600")}>
-                        {participantCount}/{task.maxParticipants} Vagas
-                      </span>
-                    </div>
-
-                    {/* Mobile Admin Actions (Inside Metadata row for space) */}
-                    {isAdminOrDirector && (
-                      <div className="sm:hidden flex items-center gap-3 ml-auto">
-                         {!isFinalized && (
-                          <button onClick={() => openModal(task, 'finalize')} className="text-green-600"><CheckCircle2 className="h-4 w-4" /></button>
-                        )}
-                        <button onClick={() => openModal(task, 'edit')} className="text-muted-foreground"><Pencil className="h-4 w-4" /></button>
-                        <button onClick={() => openModal(task, 'delete')} className="text-red-600"><Trash2 className="h-4 w-4" /></button>
-                      </div>
+                    {task.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl mt-2 leading-relaxed font-medium">
+                        {task.description}
+                      </p>
                     )}
                   </div>
-
-                  {/* Participants List */}
-                  {participantCount > 0 && (
-                    <div className="flex flex-wrap gap-2 py-1">
-                      {taskAssignments.map((a: any) => (
-                        <span key={a.id} className="text-[11px] bg-primary/5 px-3 py-1 rounded-full text-primary font-bold border border-primary/10 uppercase tracking-tight">
-                          {a.userNickname}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Main Action Buttons */}
-                  <div className="pt-2">
+                  
+                  <div className="flex items-center gap-2 shrink-0 lg:ml-6 mt-4 lg:mt-0">
                     {isFinalized ? (
-                      <div className="w-full py-2.5 rounded-xl border-2 border-muted text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-muted/10">
-                        Esta task foi concluída
-                      </div>
+                      <Badge variant="outline" className="border-muted-foreground/20 text-muted-foreground font-bold px-6 py-2.5 uppercase text-xs tracking-widest bg-muted/20">Concluída</Badge>
                     ) : alreadySubmitted ? (
-                      <div className="w-full py-2.5 rounded-xl border-2 border-primary/20 text-center text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 flex items-center justify-center gap-2">
-                        <CheckCircle2 className="h-3 w-3" /> Sua prova está em validação
-                      </div>
+                      <Badge variant="secondary" className="bg-muted text-muted-foreground font-bold px-6 py-2.5 uppercase text-xs tracking-widest border-2">Em Validação</Badge>
                     ) : isParticipant ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                      <div className="flex items-center gap-2">
                         <button 
-                          onClick={() => task.requiresAttachment ? openModal(task, 'submit') : handleDirectSubmit(task.id)}
+                          onClick={() => openModal(task, 'submit')}
                           disabled={isLoading}
-                          className="sm:col-span-3 inline-flex items-center justify-center rounded-xl text-xs font-black bg-primary text-primary-foreground hover:bg-primary/90 h-11 transition-all shadow-sm active:scale-95 disabled:opacity-50 uppercase tracking-widest"
+                          className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-xs font-black bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 transition-all shadow-sm active:scale-95 disabled:opacity-50 uppercase tracking-widest"
                         >
-                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Entregar Prova <Send className="ml-2.5 h-4 w-4" /></>}
+                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Enviar Prova <Send className="ml-2.5 h-4 w-4" /></>}
                         </button>
                         <button 
                           onClick={() => handleLeave(task.id)}
                           disabled={isLoading}
-                          className="sm:col-span-1 h-11 inline-flex items-center justify-center rounded-xl border-2 border-red-100 hover:bg-red-50 text-red-600 transition-all active:scale-95 disabled:opacity-50 text-[10px] font-black uppercase tracking-widest"
+                          className="h-11 w-11 inline-flex items-center justify-center rounded-xl border-2 border-red-100 hover:bg-red-50 hover:text-red-600 text-muted-foreground transition-all active:scale-95 disabled:opacity-50"
+                          title="Sair da task"
                         >
-                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sair'}
+                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-5 w-5" />}
                         </button>
                       </div>
                     ) : isFull ? (
-                      <div className="w-full py-2.5 rounded-xl border-2 border-red-100 text-center text-[10px] font-black uppercase tracking-widest text-red-600 bg-red-50">
-                        Limite de participantes atingido
-                      </div>
+                      <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50 font-black px-6 py-2.5 uppercase tracking-widest text-xs">Lotada</Badge>
                     ) : (
                       <button 
                         onClick={() => handleJoin(task.id)}
                         disabled={isLoading}
-                        className="w-full inline-flex items-center justify-center rounded-xl text-xs font-black border-2 border-primary text-primary hover:bg-primary hover:text-white h-11 transition-all active:scale-95 disabled:opacity-50 uppercase tracking-widest"
+                        className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-xs font-black border-2 border-primary text-primary hover:bg-primary hover:text-white h-11 px-10 transition-all active:scale-95 disabled:opacity-50 uppercase tracking-widest"
                       >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Assumir Task'}
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Participar'}
                       </button>
                     )}
                   </div>
