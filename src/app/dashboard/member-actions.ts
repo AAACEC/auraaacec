@@ -13,7 +13,29 @@ export async function submitTaskProof(formData: FormData) {
   if (!user) throw new Error('Unauthorized')
 
   const taskId = formData.get('taskId') as string
-  const attachmentLink = formData.get('attachmentLink') as string | null
+  let attachmentLink = formData.get('attachmentLink') as string | null
+
+  // Handle File Upload if present
+  const file = formData.get('file') as File
+  if (file && file instanceof File && file.size > 0) {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${user.id}/${taskId}/${Date.now()}.${fileExt}`
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('proofs')
+      .upload(fileName, file)
+
+    if (uploadError) {
+      throw new Error(`Erro no upload: ${uploadError.message}`)
+    }
+
+    // Get Public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('proofs')
+      .getPublicUrl(fileName)
+    
+    attachmentLink = publicUrl
+  }
 
   // 1. Check if user already has a pending submission for this task
   const existingPending = await db.select().from(submissions).where(

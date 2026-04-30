@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Send, Pencil, Trash2, Users, Briefcase, X, Loader2, CheckCircle2, Lock, Clock, Rocket, Search, UserPlus } from 'lucide-react'
+import { Send, Pencil, Trash2, Users, Briefcase, X, Loader2, CheckCircle2, Lock, Clock, Rocket, Search, UserPlus, Upload } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { submitTaskProof, joinTask, leaveTask } from '@/app/dashboard/member-actions'
 import { deleteTask, updateTask, finalizeTask } from '@/app/dashboard/admin-actions'
@@ -96,8 +96,8 @@ export function BountyBoard({
         await submitTaskProof(formData)
         toast.success('Task submetida!')
         closeModal()
-      } catch (error) {
-        toast.error('Erro ao enviar.')
+      } catch (error: any) {
+        toast.error(error.message || 'Erro ao enviar.')
       }
     })
   }
@@ -191,126 +191,162 @@ export function BountyBoard({
               <Card 
                 key={task.id} 
                 className={cn(
-                  "group relative border-2 p-6 rounded-2xl bg-card transition-all shadow-sm",
-                  isFinalized ? "opacity-75 grayscale-[0.5] border-muted" : "hover:border-primary/50"
+                  "group relative border-2 p-5 rounded-2xl bg-card transition-all shadow-sm overflow-hidden",
+                  isFinalized ? "opacity-75 grayscale-[0.5] border-muted" : "hover:border-primary/40 hover:shadow-md"
                 )}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <p className={cn(
-                        "font-bold text-xl leading-tight tracking-tight text-foreground",
-                        isFinalized && "line-through text-muted-foreground"
-                      )}>
-                        {task.title}
-                      </p>
-                      
-                      <div className="flex items-center gap-2">
-                        {isFinalized ? (
-                          <Badge variant="secondary" className="bg-muted text-muted-foreground font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
-                            <Lock className="h-2.5 w-2.5" /> Concluída
-                          </Badge>
-                        ) : isInProgress ? (
-                          <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
-                            <Clock className="h-2.5 w-2.5" /> Em Andamento
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
-                            <Rocket className="h-2.5 w-2.5" /> Aberta
-                          </Badge>
-                        )}
+                {/* Visual indicator for status */}
+                <div className={cn(
+                  "absolute top-0 left-0 w-1 h-full",
+                  isFinalized ? "bg-muted" : isInProgress ? "bg-amber-500" : "bg-green-500"
+                )} />
 
-                        {!isFinalized && (
-                          <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter border-2">
-                            {task.auraValue} AURA
-                          </Badge>
-                        )}
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div className="space-y-2.5 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className={cn(
+                          "font-bold text-xl leading-tight tracking-tight text-foreground",
+                          isFinalized && "line-through text-muted-foreground/60"
+                        )}>
+                          {task.title}
+                        </p>
+                        
+                        <div className="flex items-center gap-1.5">
+                          {isFinalized ? (
+                            <Badge variant="secondary" className="bg-muted text-muted-foreground font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
+                              <Lock className="h-2.5 w-2.5" /> Concluída
+                            </Badge>
+                          ) : isInProgress ? (
+                            <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
+                              <Clock className="h-2.5 w-2.5" /> Em Andamento
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter flex items-center gap-1 border-2">
+                              <Rocket className="h-2.5 w-2.5" /> Aberta
+                            </Badge>
+                          )}
+
+                          {!isFinalized && (
+                            <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 font-black text-[9px] px-2 py-0.5 uppercase tracking-tighter border-2">
+                              {task.auraValue} AURA
+                            </Badge>
+                          )}
+                        </div>
                       </div>
 
-                      {isAdminOrDirector && (
-                        <div className="flex gap-1 transition-opacity">
-                          {!isFinalized && (
-                            <button 
-                              onClick={() => openModal(task, 'finalize')} 
-                              className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-green-50 text-muted-foreground hover:text-green-600 transition-colors"
-                              title="Marcar como Finalizada"
-                            >
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                          <button onClick={() => openModal(task, 'edit')} className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button onClick={() => openModal(task, 'delete')} className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
+                      {task.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl leading-relaxed font-medium">
+                          {task.description}
+                        </p>
                       )}
                     </div>
                     
-                    <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-muted-foreground uppercase tracking-widest font-bold">
-                      <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5" /> {task.originArea}</span>
-                      <span className={`flex items-center gap-1.5 ${isFull && !isParticipant && !isFinalized ? 'text-red-600' : ''}`}>
-                        <Users className="h-3.5 w-3.5" /> {participantCount}/{task.maxParticipants}
-                      </span>
-                      {task.creatorNickname && (
-                        <span className="flex items-center gap-1.5 opacity-60">
-                          Criado por: <span className="text-foreground">{task.creatorNickname}</span>
-                        </span>
-                      )}
-                    </div>
-
-                    {participantCount > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {taskAssignments.map((a: any) => (
-                          <div key={a.id} className="group/member relative">
-                            <span className="text-[13px] bg-muted/70 px-4 py-1.5 rounded-full text-foreground font-black border-2 uppercase tracking-tight shadow-sm transition-all hover:bg-muted inline-flex items-center gap-2">
-                              {a.userNickname}
-                            </span>
-                          </div>
-                        ))}
+                    {/* Desktop Admin Actions */}
+                    {isAdminOrDirector && (
+                      <div className="hidden sm:flex items-center gap-1 bg-muted/30 p-1 rounded-xl border-2">
+                        {!isFinalized && (
+                          <button 
+                            onClick={() => openModal(task, 'finalize')} 
+                            className="h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-green-100 text-muted-foreground hover:text-green-600 transition-colors"
+                            title="Finalizar e dar Aura"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => openModal(task, 'edit')} 
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-white text-muted-foreground hover:text-primary transition-colors"
+                          title="Editar"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button 
+                          onClick={() => openModal(task, 'delete')} 
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     )}
+                  </div>
 
-                    {task.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl mt-3 leading-relaxed font-medium">
-                        {task.description}
-                      </p>
+                  {/* Metadata Row */}
+                  <div className="flex flex-wrap items-center gap-y-2 gap-x-6 pt-1 border-t-2 border-muted/30">
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest font-black">
+                      <Briefcase className="h-3.5 w-3.5 text-primary/60" /> 
+                      <span>{task.originArea}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest font-black">
+                      <Users className={cn("h-3.5 w-3.5", isFull && !isParticipant && !isFinalized ? "text-red-500" : "text-primary/60")} /> 
+                      <span className={cn(isFull && !isParticipant && !isFinalized && "text-red-600")}>
+                        {participantCount}/{task.maxParticipants} Vagas
+                      </span>
+                    </div>
+
+                    {/* Mobile Admin Actions (Inside Metadata row for space) */}
+                    {isAdminOrDirector && (
+                      <div className="sm:hidden flex items-center gap-3 ml-auto">
+                         {!isFinalized && (
+                          <button onClick={() => openModal(task, 'finalize')} className="text-green-600"><CheckCircle2 className="h-4 w-4" /></button>
+                        )}
+                        <button onClick={() => openModal(task, 'edit')} className="text-muted-foreground"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => openModal(task, 'delete')} className="text-red-600"><Trash2 className="h-4 w-4" /></button>
+                      </div>
                     )}
                   </div>
-                  
-                  <div className="flex items-center gap-2 shrink-0">
+
+                  {/* Participants List */}
+                  {participantCount > 0 && (
+                    <div className="flex flex-wrap gap-2 py-1">
+                      {taskAssignments.map((a: any) => (
+                        <span key={a.id} className="text-[11px] bg-primary/5 px-3 py-1 rounded-full text-primary font-bold border border-primary/10 uppercase tracking-tight">
+                          {a.userNickname}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Main Action Buttons */}
+                  <div className="pt-2">
                     {isFinalized ? (
-                      <Badge variant="outline" className="border-muted-foreground/20 text-muted-foreground font-bold px-6 py-2 uppercase text-xs tracking-widest bg-muted/20">Concluída</Badge>
+                      <div className="w-full py-2.5 rounded-xl border-2 border-muted text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-muted/10">
+                        Esta task foi concluída
+                      </div>
                     ) : alreadySubmitted ? (
-                      <Badge variant="secondary" className="bg-muted text-muted-foreground font-bold px-6 py-2 uppercase text-xs tracking-widest">Enviada</Badge>
+                      <div className="w-full py-2.5 rounded-xl border-2 border-primary/20 text-center text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 flex items-center justify-center gap-2">
+                        <CheckCircle2 className="h-3 w-3" /> Sua prova está em validação
+                      </div>
                     ) : isParticipant ? (
-                      <>
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                         <button 
                           onClick={() => task.requiresAttachment ? openModal(task, 'submit') : handleDirectSubmit(task.id)}
                           disabled={isLoading}
-                          className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-xs font-black bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 transition-all shadow-sm active:scale-95 disabled:opacity-50 uppercase tracking-widest"
+                          className="sm:col-span-3 inline-flex items-center justify-center rounded-xl text-xs font-black bg-primary text-primary-foreground hover:bg-primary/90 h-11 transition-all shadow-sm active:scale-95 disabled:opacity-50 uppercase tracking-widest"
                         >
-                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Enviar <Send className="ml-2.5 h-4 w-4" /></>}
+                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Entregar Prova <Send className="ml-2.5 h-4 w-4" /></>}
                         </button>
                         <button 
                           onClick={() => handleLeave(task.id)}
                           disabled={isLoading}
-                          className="h-11 w-11 inline-flex items-center justify-center rounded-xl border-2 border-input hover:bg-red-50 hover:text-red-600 text-muted-foreground transition-all active:scale-95 disabled:opacity-50"
-                          title="Sair da task"
+                          className="sm:col-span-1 h-11 inline-flex items-center justify-center rounded-xl border-2 border-red-100 hover:bg-red-50 text-red-600 transition-all active:scale-95 disabled:opacity-50 text-[10px] font-black uppercase tracking-widest"
                         >
-                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-5 w-5" />}
+                          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sair'}
                         </button>
-                      </>
+                      </div>
                     ) : isFull ? (
-                      <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50 font-black px-6 py-2 uppercase tracking-widest text-xs">Lotada</Badge>
+                      <div className="w-full py-2.5 rounded-xl border-2 border-red-100 text-center text-[10px] font-black uppercase tracking-widest text-red-600 bg-red-50">
+                        Limite de participantes atingido
+                      </div>
                     ) : (
                       <button 
                         onClick={() => handleJoin(task.id)}
                         disabled={isLoading}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-xs font-black border-2 border-primary text-primary hover:bg-primary hover:text-white h-11 px-8 transition-all active:scale-95 disabled:opacity-50 uppercase tracking-widest"
+                        className="w-full inline-flex items-center justify-center rounded-xl text-xs font-black border-2 border-primary text-primary hover:bg-primary hover:text-white h-11 transition-all active:scale-95 disabled:opacity-50 uppercase tracking-widest"
                       >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Participar'}
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Assumir Task'}
                       </button>
                     )}
                   </div>
@@ -325,37 +361,52 @@ export function BountyBoard({
         </div>
       )}
 
-      {/* Global Modals */}
       <Dialog open={modalType === 'submit'} onOpenChange={(open) => !open && !isPending && closeModal()}>
         <DialogContent className="sm:max-w-[400px] rounded-2xl">
           {selectedTask && (
             <form action={handleSubmit}>
               <input type="hidden" name="taskId" value={selectedTask.id} />
               <DialogHeader>
-                <DialogTitle className="text-xl font-bold tracking-tight">Enviar Anexo</DialogTitle>
+                <DialogTitle className="text-xl font-bold tracking-tight">Entregar Prova</DialogTitle>
                 <DialogDescription className="font-bold text-primary uppercase text-[10px] tracking-widest">{selectedTask.title}</DialogDescription>
               </DialogHeader>
-              <div className="py-6">
-                <Label htmlFor="attachmentLink" className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">
-                  Link do Anexo
-                </Label>
-                <Input 
-                  id="attachmentLink" 
-                  name="attachmentLink" 
-                  required
-                  className="mt-2 h-11 rounded-xl border-2 focus-visible:ring-primary" 
-                />
-                <p className="text-[10px] text-muted-foreground mt-2 font-medium">
-                  Esta tarefa exige um link comprobatório para ser validada.
-                </p>
+              
+              <div className="py-6 space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="proof" className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">
+                    Selecionar Arquivo (Imagem ou PDF)
+                  </Label>
+                  
+                  <div className="relative group">
+                    <input 
+                      id="proof" 
+                      name="file" 
+                      type="file" 
+                      accept="image/*,.pdf"
+                      required
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">
+                      <Upload className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Clique para selecionar</span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-[10px] text-muted-foreground mt-2 font-medium italic">
+                    {selectedTask.requiresAttachment 
+                      ? "Esta tarefa exige comprovação para ser validada." 
+                      : "Esta tarefa não exige anexo, mas você pode fornecer um."}
+                  </p>
+                </div>
               </div>
+
               <DialogFooter>
                 <button 
                   type="submit" 
                   disabled={isPending}
                   className="w-full inline-flex items-center justify-center rounded-xl text-sm font-black bg-primary text-primary-foreground h-12 px-4 transition-all active:scale-95 disabled:opacity-50 uppercase tracking-widest shadow-md"
                 >
-                  {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Submeter Task'}
+                  {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirmar Entrega'}
                 </button>
               </DialogFooter>
             </form>
