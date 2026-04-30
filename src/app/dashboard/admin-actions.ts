@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { db } from '@/db'
 import { tasks, submissions, profiles, notifications, taskAssignments } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
 // Auth & Role Helper
@@ -168,6 +168,10 @@ export async function updateTask(formData: FormData) {
   const maxParticipants = parseInt(maxParticipantsRaw, 10) || 1
   const requiresAttachment = formData.get('requiresAttachment') === 'on'
 
+  // New: Get assigned members from form
+  const assignedMemberIds = formData.getAll('assignedMembers') as string[]
+
+  // 1. Update Task Details
   await db.update(tasks)
     .set({ 
       title, 
@@ -179,6 +183,40 @@ export async function updateTask(formData: FormData) {
     })
     .where(eq(tasks.id, taskId))
 
+  // 2. Sync Assignments
+  // Get current assignments
+  const currentAssignments = await db.select().from(taskAssignments).where(eq(taskAssignments.taskId, taskId))
+  const currentMemberIds = currentAssignments.map(a => a.userId)
+
+  // Members to add (in assignedMemberIds but not in currentMemberIds)
+  const membersToAdd = assignedMemberIds.filter(id => !currentMemberIds.includes(id))
+  
+  // Members to remove (in currentMemberIds but not in assignedMemberIds)
+  const membersToRemove = currentMemberIds.filter(id => !assignedMemberIds.includes(id))
+
+  // Add new members
+  for (const memberId of membersToAdd) {
+    await db.insert(taskAssignments).values({
+      taskId,
+      userId: memberId
+    })
+    
+    // Notify them
+    await db.insert(notifications).values({
+      userId: memberId,
+      message: `Você foi escalado para a task: "${title}".`,
+    })
+  }
+
+  // Remove members
+  if (membersToRemove.length > 0) {
+    await db.delete(taskAssignments)
+      .where(and(
+        eq(taskAssignments.taskId, taskId),
+        inArray(taskAssignments.userId, membersToRemove)
+      ))
+  }
+
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/tasks')
 }
@@ -186,6 +224,45 @@ export async function updateTask(formData: FormData) {
 export async function finalizeTask(taskId: string) {
   await checkAdminOrDirector()
   
+  // 1. Get task info
+  const taskRecord = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1)
+  if (taskRecord.length === 0) throw new Error('Task not found')
+  const task = taskRecord[0]
+
+  // 2. Get all assigned participants
+  const assignments = await db.select().from(taskAssignments).where(eq(taskAssignments.taskId, taskId))
+
+  // 3. Award Aura to each participant
+  for (const assignment of assignments) {
+    const memberRecord = await db.select().from(profiles).where(eq(profiles.id, assignment.userId)).limit(1)
+    if (memberRecord.length > 0) {
+      const member = memberRecord[0]
+      
+      // Update member aura
+      await db.update(profiles)
+        .set({ accumulatedAura: member.accumulatedAura + task.auraValue })
+        .where(eq(profiles.id, member.id))
+      
+      // Notify member
+      await db.insert(notifications).values({
+        userId: member.id,
+        message: `A task "${task.title}" foi finalizada! Você ganhou ${task.auraValue} AURA.`,
+      })
+
+      // Create an approved submission record for history
+      await db.insert(submissions).values({
+        taskId: task.id,
+        memberId: member.id,
+        attachmentLink: 'Finalizada pela diretoria',
+        validationStatus: 'Aprovada'
+      })
+    }
+  }
+
+  // 4. Clear all assignments for this task
+  await db.delete(taskAssignments).where(eq(taskAssignments.taskId, taskId))
+
+  // 5. Update task status
   await db.update(tasks)
     .set({ status: 'Finalizada' })
     .where(eq(tasks.id, taskId))

@@ -5,12 +5,12 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Send, Pencil, Trash2, Users, Briefcase, X, Loader2, CheckCircle2, Lock, Clock, Rocket } from 'lucide-react'
+import { Send, Pencil, Trash2, Users, Briefcase, X, Loader2, CheckCircle2, Lock, Clock, Rocket, Search, UserPlus } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { submitTaskProof, joinTask, leaveTask } from '@/app/dashboard/member-actions'
 import { deleteTask, updateTask, finalizeTask, grantAuraDirectly } from '@/app/dashboard/admin-actions'
 import { toast } from 'sonner'
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
 export function BountyBoard({ 
@@ -18,13 +18,15 @@ export function BountyBoard({
   userSubmissions, 
   assignments = [],
   currentUserId,
-  isAdminOrDirector = false 
+  isAdminOrDirector = false,
+  allProfiles = []
 }: { 
   activeTasks: any[], 
   userSubmissions: any[],
   assignments?: any[],
   currentUserId?: string,
-  isAdminOrDirector?: boolean
+  isAdminOrDirector?: boolean,
+  allProfiles?: any[]
 }) {
   const [selectedTask, setSelectedTask] = useState<any | null>(null)
   const [modalType, setModalType] = useState<'submit' | 'edit' | 'delete' | 'finalize' | 'grant' | null>(null)
@@ -32,77 +34,51 @@ export function BountyBoard({
   const [isPending, startTransition] = useTransition()
   const [actionTaskId, setActionTaskId] = useState<string | null>(null)
 
+  // States for task editing assignments
+  const [editingAssignedMemberIds, setEditingAssignedMemberIds] = useState<string[]>([])
+  const [memberSearch, setMemberSearch] = useState('')
+
   const openModal = (task: any, type: 'submit' | 'edit' | 'delete' | 'finalize' | 'grant', member?: any) => {
     setSelectedTask(task)
     setModalType(type)
     if (member) setSelectedMember(member)
+    
+    if (type === 'edit') {
+      const currentTaskAssignments = assignments.filter(a => a.taskId === task.id)
+      setEditingAssignedMemberIds(currentTaskAssignments.map(a => a.userId))
+      setMemberSearch('')
+    }
   }
 
   const closeModal = () => {
     setSelectedTask(null)
     setModalType(null)
     setSelectedMember(null)
+    setEditingAssignedMemberIds([])
+    setMemberSearch('')
   }
 
-  const handleSubmit = async (formData: FormData) => {
-    startTransition(async () => {
-      try {
-        await submitTaskProof(formData)
-        toast.success('Task submetida!')
-        closeModal()
-      } catch (error) {
-        toast.error('Erro ao enviar.')
+  const toggleEditingMemberAssignment = (memberId: string, maxParticipants: number) => {
+    setEditingAssignedMemberIds(prev => {
+      if (prev.includes(memberId)) {
+        return prev.filter(id => id !== memberId)
       }
+      if (maxParticipants && prev.length >= maxParticipants) {
+        toast.error(`Limite de ${maxParticipants} participantes atingido.`)
+        return prev
+      }
+      return [...prev, memberId]
     })
   }
 
-  const handleDirectSubmit = async (taskId: string) => {
-    const formData = new FormData()
-    formData.append('taskId', taskId)
-    formData.append('attachmentLink', '')
-    
-    setActionTaskId(taskId)
-    startTransition(async () => {
-      try {
-        await submitTaskProof(formData)
-        toast.success('Task concluída com sucesso!')
-      } catch (error) {
-        toast.error('Erro ao concluir task.')
-      } finally {
-        setActionTaskId(null)
-      }
-    })
-  }
-
-  const handleJoin = async (taskId: string) => {
-    setActionTaskId(taskId)
-    startTransition(async () => {
-      try {
-        await joinTask(taskId)
-        toast.success('Você assumiu esta task!')
-      } catch (error: any) {
-        toast.error(error.message || 'Erro ao participar.')
-      } finally {
-        setActionTaskId(null)
-      }
-    })
-  }
-
-  const handleLeave = async (taskId: string) => {
-    setActionTaskId(taskId)
-    startTransition(async () => {
-      try {
-        await leaveTask(taskId)
-        toast.success('Você saiu da task.')
-      } catch (error) {
-        toast.error('Erro ao sair.')
-      } finally {
-        setActionTaskId(null)
-      }
-    })
-  }
+  const filteredMembers = allProfiles.filter(p => 
+    p.nickname.toLowerCase().includes(memberSearch.toLowerCase()) ||
+    p.fullName.toLowerCase().includes(memberSearch.toLowerCase())
+  )
 
   const handleUpdate = async (formData: FormData) => {
+    editingAssignedMemberIds.forEach(id => formData.append('assignedMembers', id))
+    
     startTransition(async () => {
       try {
         await updateTask(formData)
@@ -388,6 +364,46 @@ export function BountyBoard({
                   <Label htmlFor="edit-limit" className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Vagas</Label>
                   <Input id="edit-limit" name="maxParticipants" type="number" min="1" defaultValue={selectedTask.maxParticipants} required className="h-11 rounded-xl border-2" />
                 </div>
+
+                {/* Member Assignment Section */}
+                <div className="space-y-2">
+                  <Label className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground flex items-center gap-1">
+                    <UserPlus className="h-3 w-3" /> Gerenciar Membros ({editingAssignedMemberIds.length}{selectedTask.maxParticipants ? `/${selectedTask.maxParticipants}` : ''})
+                  </Label>
+                  
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                    <input 
+                      type="text"
+                      placeholder="Buscar membro..."
+                      value={memberSearch}
+                      onChange={(e) => setMemberSearch(e.target.value)}
+                      className="w-full h-8 pl-8 pr-3 rounded-lg border-2 border-input bg-background text-[10px] focus:border-primary outline-none transition-all font-bold uppercase tracking-tighter"
+                    />
+                  </div>
+
+                  <div className="max-h-[120px] overflow-y-auto border-2 rounded-xl p-2 space-y-1 bg-muted/20">
+                    {filteredMembers.map(p => (
+                      <div 
+                        key={p.id} 
+                        onClick={() => toggleEditingMemberAssignment(p.id, selectedTask.maxParticipants)}
+                        className={`flex items-center justify-between px-3 py-1.5 rounded-lg cursor-pointer transition-all border-2
+                          ${editingAssignedMemberIds.includes(p.id) 
+                            ? 'bg-primary/10 border-primary/30 text-primary' 
+                            : 'hover:bg-muted border-transparent text-muted-foreground'}`}
+                      >
+                        <span className="text-xs font-bold">{p.nickname}</span>
+                        {editingAssignedMemberIds.includes(p.id) && <CheckCircle2 className="h-3 w-3" />}
+                      </div>
+                    ))}
+                    {filteredMembers.length === 0 && (
+                      <p className="text-[10px] italic text-center py-2 text-muted-foreground">
+                        Nenhum membro encontrado.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 <div className="flex items-center space-x-2 pt-2">
                   <input 
                     type="checkbox" 

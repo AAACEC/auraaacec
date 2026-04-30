@@ -13,6 +13,7 @@ export default async function TasksPage(props: {
 }) {
   const searchParams = await props.searchParams;
   const area = typeof searchParams.course === 'string' ? searchParams.course : undefined;
+  const status = typeof searchParams.status === 'string' ? searchParams.status : 'Ativa';
   const availability = typeof searchParams.availability === 'string' ? searchParams.availability : undefined;
   const sortBy = typeof searchParams.sort === 'string' ? searchParams.sort : 'newest';
   const query = typeof searchParams.q === 'string' ? searchParams.q : undefined;
@@ -45,7 +46,12 @@ export default async function TasksPage(props: {
     .orderBy(desc(notifications.createdAt))
 
   // 3. Fetch Tasks (Basic Filters)
-  const taskFilters = [inArray(tasks.status, ['Ativa', 'Finalizada'])];
+  const taskFilters = [];
+  if (status === 'all') {
+    taskFilters.push(inArray(tasks.status, ['Ativa', 'Finalizada']));
+  } else {
+    taskFilters.push(eq(tasks.status, status as any));
+  }
   if (area && area !== 'all') taskFilters.push(eq(tasks.originArea, area as any));
   if (query) taskFilters.push(sql`title ilike ${'%' + query + '%'}`);
 
@@ -119,6 +125,12 @@ export default async function TasksPage(props: {
 
   const areas = ['100Nossao', 'Produtos', 'Eventos', 'Esportes', 'Cultura', 'Marketing', 'Administração'];
 
+  // Fetch all profiles if admin/director for the edit modal
+  let allProfiles: any[] = []
+  if (isPresidencyOrDirector) {
+    allProfiles = await db.select().from(profiles).orderBy(profiles.nickname)
+  }
+
   return (
     <div className="container mx-auto py-10 px-4 space-y-10">
       <div className="flex flex-col gap-1">
@@ -140,6 +152,7 @@ export default async function TasksPage(props: {
           isAdminOrDirector={isPresidencyOrDirector}
           assignments={assignments}
           currentUserId={user.id}
+          allProfiles={allProfiles}
         />
       </div>
     </div>

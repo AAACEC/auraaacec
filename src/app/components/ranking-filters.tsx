@@ -30,7 +30,7 @@ export function RankingFilters({
   }
 
   return (
-    <div className="grid gap-4 p-4 rounded-xl border-2 md:grid-cols-3 lg:grid-cols-5">
+    <div className="grid gap-4 p-4 rounded-xl border-2 md:grid-cols-3 lg:grid-cols-6">
       {/* Busca */}
       <div className="space-y-2 lg:col-span-1">
         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Buscar</Label>
@@ -99,6 +99,20 @@ export function RankingFilters({
 
       {isTaskPage && (
         <>
+          {/* Filtro de Status */}
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</Label>
+            <select 
+              className="w-full h-10 rounded-xl border-2 border-input bg-background px-3 text-sm outline-none focus:border-primary transition-all shadow-sm"
+              defaultValue={searchParams.get('status') || 'Ativa'}
+              onChange={(e) => updateFilters('status', e.target.value)}
+            >
+              <option value="all">Tudo</option>
+              <option value="Ativa">Ativas</option>
+              <option value="Finalizada">Finalizadas</option>
+            </select>
+          </div>
+
           {/* Filtro de Disponibilidade */}
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Disponibilidade</Label>
