@@ -151,7 +151,19 @@ export async function updateUserRole(formData: FormData) {
 export async function deleteTask(formData: FormData) {
   await checkAdminOrDirector()
   const taskId = formData.get('taskId') as string
-  await db.delete(tasks).where(eq(tasks.id, taskId))
+
+  // Use a transaction to ensure all related data is deleted together
+  await db.transaction(async (tx) => {
+    // 1. Delete associated assignments
+    await tx.delete(taskAssignments).where(eq(taskAssignments.taskId, taskId))
+    
+    // 2. Delete associated submissions
+    await tx.delete(submissions).where(eq(submissions.taskId, taskId))
+    
+    // 3. Finally delete the task
+    await tx.delete(tasks).where(eq(tasks.id, taskId))
+  })
+
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/tasks')
 }
