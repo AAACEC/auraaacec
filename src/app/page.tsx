@@ -5,7 +5,7 @@ import { RankingFilters } from "./components/ranking-filters";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Ranking",
+  title: "Ranking | AurAAACEC",
 };
 
 export default async function Home(props: {
