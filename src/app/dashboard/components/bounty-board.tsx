@@ -10,8 +10,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { submitTaskProof, joinTask, leaveTask } from '@/app/dashboard/member-actions'
 import { deleteTask, updateTask, finalizeTask } from '@/app/dashboard/admin-actions'
 import { toast } from 'sonner'
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 
 export function BountyBoard({ 
   activeTasks, 
@@ -28,7 +29,9 @@ export function BountyBoard({
   isAdminOrDirector?: boolean,
   allProfiles?: any[]
 }) {
+  const router = useRouter()
   const [selectedTask, setSelectedTask] = useState<any | null>(null)
+
   const [modalType, setModalType] = useState<'submit' | 'edit' | 'delete' | 'finalize' | null>(null)
   const [selectedMember, setSelectedMember] = useState<any | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -83,6 +86,7 @@ export function BountyBoard({
       try {
         await updateTask(formData)
         toast.success('Tarefa salva!')
+        router.refresh()
         closeModal()
       } catch (error) {
         toast.error('Erro ao salvar.')
@@ -95,6 +99,7 @@ export function BountyBoard({
       try {
         await submitTaskProof(formData)
         toast.success('Task submetida!')
+        router.refresh()
         closeModal()
       } catch (error: any) {
         toast.error(error.message || 'Erro ao enviar.')
@@ -112,6 +117,7 @@ export function BountyBoard({
       try {
         await submitTaskProof(formData)
         toast.success('Task concluída com sucesso!')
+        router.refresh()
       } catch (error) {
         toast.error('Erro ao concluir task.')
       } finally {
@@ -126,6 +132,7 @@ export function BountyBoard({
       try {
         await joinTask(taskId)
         toast.success('Você assumiu esta task!')
+        router.refresh()
       } catch (error: any) {
         toast.error(error.message || 'Erro ao participar.')
       } finally {
@@ -140,6 +147,7 @@ export function BountyBoard({
       try {
         await leaveTask(taskId)
         toast.success('Você saiu da task.')
+        router.refresh()
       } catch (error) {
         toast.error('Erro ao sair.')
       } finally {
@@ -153,6 +161,7 @@ export function BountyBoard({
       try {
         await deleteTask(formData)
         toast.success('Tarefa removida!')
+        router.refresh()
         closeModal()
       } catch (error) {
         toast.error('Erro ao remover.')
@@ -166,6 +175,7 @@ export function BountyBoard({
       try {
         await finalizeTask(selectedTask.id)
         toast.success('Tarefa finalizada!')
+        router.refresh()
         closeModal()
       } catch (error) {
         toast.error('Erro ao finalizar.')
