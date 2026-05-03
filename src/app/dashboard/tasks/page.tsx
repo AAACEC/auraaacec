@@ -87,7 +87,7 @@ export default async function TasksPage(props: {
     availabilityFilter = gte(assignmentCounts.count, tasks.maxParticipants)
   }
 
-  // Main Query - Hide tasks where user already has an APPROVED submission
+  // Main Query - Hide tasks where user already has an APPROVED submission (Except for Admins)
   const results = await db
     .select({
       task: tasks,
@@ -100,7 +100,8 @@ export default async function TasksPage(props: {
       ...taskFilters, 
       availabilityFilter,
       // Logic: Only show tasks that the current user hasn't successfully completed yet
-      notExists(
+      // Admins see everything to manage them
+      isPresidencyOrDirector ? undefined : notExists(
         db.select()
           .from(submissions)
           .where(and(
@@ -114,7 +115,7 @@ export default async function TasksPage(props: {
              sortBy === 'aura-high' ? desc(tasks.auraValue) :
              sortBy === 'aura-low' ? asc(tasks.auraValue) :
              desc(tasks.createdAt))
-    .limit(100)
+    .limit(isPresidencyOrDirector ? 500 : 100)
 
   const activeTasksWithCount = results.map(r => ({
     ...r.task,
