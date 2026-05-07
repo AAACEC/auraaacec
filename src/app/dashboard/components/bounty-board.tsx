@@ -31,6 +31,7 @@ export function BountyBoard({
   const [selectedTask, setSelectedTask] = useState<any | null>(null)
   const [modalType, setModalType] = useState<'submit' | 'edit' | 'delete' | 'finalize' | null>(null)
   const [selectedMember, setSelectedMember] = useState<any | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isPending, startTransition] = useTransition()
   const [actionTaskId, setActionTaskId] = useState<string | null>(null)
 
@@ -57,6 +58,7 @@ export function BountyBoard({
     setSelectedMember(null)
     setEditingAssignedMemberIds([])
     setMemberSearch('')
+    setSelectedFile(null)
   }
 
   const toggleEditingMemberAssignment = (memberId: string, maxParticipants: number) => {
@@ -361,11 +363,26 @@ export function BountyBoard({
                       type="file" 
                       accept="image/*,.pdf"
                       required
+                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
-                    <div className="h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">
-                      <Upload className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Clique para selecionar</span>
+                    <div className={cn(
+                      "h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all",
+                      selectedFile ? "border-primary bg-primary/5" : "group-hover:border-primary/50 group-hover:bg-primary/5"
+                    )}>
+                      {selectedFile ? (
+                        <>
+                          <CheckCircle2 className="h-6 w-6 text-primary animate-in zoom-in duration-300" />
+                          <span className="text-[10px] font-bold text-primary uppercase tracking-tighter truncate max-w-[200px]">
+                            {selectedFile.name}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Clique para selecionar</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   
